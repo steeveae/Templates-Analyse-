@@ -1,4 +1,4 @@
-const CACHE_NAME = 'schaet-v2';
+const CACHE_NAME = 'schaet-v3';
 
 const LOCAL_ASSETS = [
   './',
