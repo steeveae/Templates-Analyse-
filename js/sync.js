@@ -94,6 +94,12 @@ async function syncDeleteAllDocs(){
   if (error) console.warn('syncDeleteAllDocs:', error.message);
 }
 
+async function syncResendConfirmation(email){
+  if (!_sb) throw new Error('Configurez d\'abord l\'URL Supabase et la clé anon.');
+  const { error } = await _sb.auth.resend({ type: 'signup', email });
+  if (error) throw error;
+}
+
 function _updateSyncUI(){
   const loginArea  = document.getElementById('loginArea');
   const loggedArea = document.getElementById('loggedInArea');
