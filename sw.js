@@ -1,4 +1,4 @@
-const CACHE_NAME = 'medchat-v1';
+const CACHE_NAME = 'schaet-v2';
 
 const LOCAL_ASSETS = [
   './',
@@ -6,6 +6,7 @@ const LOCAL_ASSETS = [
   './css/style.css',
   './js/config.js',
   './js/storage.js',
+  './js/sync.js',
   './js/extractor.js',
   './js/context.js',
   './js/api.js',
@@ -19,6 +20,7 @@ const LOCAL_ASSETS = [
 const CDN_ASSETS = [
   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js',
+  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js',
   'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@500;600;700&display=swap'
 ];
 
@@ -53,7 +55,9 @@ self.addEventListener('fetch', event => {
   const { request } = event;
   const url = new URL(request.url);
 
+  /* API calls → always network, never cache */
   if (url.hostname === 'openrouter.ai') return;
+  if (url.hostname.endsWith('supabase.co')) return;
 
   if (url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com'){
     event.respondWith(staleWhileRevalidate(request));

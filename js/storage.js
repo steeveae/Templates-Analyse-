@@ -28,7 +28,8 @@ function persistMode(){ try{ lsSet(LS.mode, state.mode); }catch(e){} }
 function persistDocs(){
   const snap = state.docs.map(d => ({
     name: d.name, kind: d.kind||'DOC', text: d.text||'',
-    size: d.size||0, truncated: !!d.truncated, included: d.included !== false
+    size: d.size||0, truncated: !!d.truncated, included: d.included !== false,
+    theme: (typeof d.theme === 'string' && d.theme) ? d.theme : 'Général'
   }));
   function syncFlags(){ state.docs.forEach((d,j)=>{ d.savedTruncated = !!(snap[j] && snap[j].truncated); }); }
   for (let pass=0; pass<300; pass++){

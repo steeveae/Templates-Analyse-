@@ -1,49 +1,78 @@
 'use strict';
 
-async function callOpenRouter(messages){
+/* ── Streaming SSE → callback(chunk) appelé à chaque token ── */
+async function callOpenRouterStream(messages, onChunk, onDone, onError){
   const ctrl = new AbortController();
-  const timer = setTimeout(()=>ctrl.abort(), 90000);
-  let res;
-  try{
-    res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method:'POST',
-      headers:{
-        'Authorization':'Bearer ' + state.key.trim(),
-        'Content-Type':'application/json',
-        'HTTP-Referer':'https://medchat.app',
-        'X-Title':'MedChat'
+  const timer = setTimeout(() => ctrl.abort(), 60000);
+  const maxTok = MAX_TOKENS[state.mode] || MAX_TOKENS.court;
+
+  try {
+    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + state.key.trim(),
+        'Content-Type': 'application/json',
+        'HTTP-Referer': 'https://schaet.app',
+        'X-Title': 'SCHAET +'
       },
-      body: JSON.stringify({ model: state.model, messages, max_tokens: 2048, temperature: 0.2 }),
+      body: JSON.stringify({
+        model: state.model,
+        messages,
+        max_tokens: maxTok,
+        temperature: 0.15,
+        stream: true
+      }),
       signal: ctrl.signal
     });
-  }catch(e){
-    if (e && e.name === 'AbortError') throw new Error('La requête a expiré (délai de 90 s dépassé).');
-    throw e;
-  }finally{
+
+    if (!res.ok) {
+      let errMsg = 'HTTP ' + res.status;
+      try { const d = await res.json(); errMsg = (d.error && d.error.message) || errMsg; } catch(_){}
+      throw new Error(errMsg);
+    }
+
+    const reader = res.body.getReader();
+    const dec = new TextDecoder();
+    let buf = '';
+    let full = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      const lines = buf.split('\n');
+      buf = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const data = line.slice(6).trim();
+        if (data === '[DONE]') { onDone(full); clearTimeout(timer); return; }
+        try {
+          const j = JSON.parse(data);
+          const delta = j.choices?.[0]?.delta?.content;
+          if (delta) { full += delta; onChunk(delta); }
+        } catch(_) {}
+      }
+    }
+    onDone(full);
+  } catch(e) {
+    clearTimeout(timer);
+    if (e?.name === 'AbortError') onError(new Error('Délai dépassé (60 s). Réessayez ou choisissez un modèle plus léger.'));
+    else onError(e);
+  } finally {
     clearTimeout(timer);
   }
-  let data=null;
-  try{ data = await res.json(); }catch(e){}
-  if (!res.ok){
-    const d = (data && data.error) ? (data.error.message || JSON.stringify(data.error)) : ('HTTP ' + res.status);
-    throw new Error(d);
-  }
-  if (data && data.error) throw new Error(data.error.message || 'Provider returned error');
-  const content = data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
-  if (content == null) throw new Error('Réponse vide du modèle');
-  return content;
 }
 
 function friendlyError(err){
   const m = (err && err.message) ? err.message : String(err);
-  let extra='';
-  if (/provider returned error|provider error|no allowed providers|not available|no endpoints|429|503|502|404/i.test(m))
-    extra = '\n\n💡 Ce modèle peut refuser la requête ou être momentanément indisponible. Cliquez sur ⚡ et choisissez « OpenRouter Auto », qui bascule automatiquement vers un modèle gratuit disponible.';
+  let extra = '';
+  if (/provider returned error|no allowed providers|not available|no endpoints|429|503|502|404/i.test(m))
+    extra = '\n\n💡 Choisissez **OpenRouter Auto** (bouton ⚡) qui bascule automatiquement.';
   else if (/401|invalid|unauthor|api key|no auth/i.test(m))
     extra = '\n\n💡 Vérifiez votre clé API dans ⚙️ Config.';
-  else if (/expir|timeout|timed out|aborted/i.test(m))
-    extra = '\n\n💡 Le serveur a mis trop de temps à répondre. Réessayez, ou choisissez « OpenRouter Auto » / un modèle plus léger.';
+  else if (/expir|timeout|timed out|aborted|délai/i.test(m))
+    extra = '\n\n💡 Réessayez ou choisissez **Gemma 4** ou **OpenRouter Auto**.';
   else if (/failed to fetch|networkerror|load failed/i.test(m))
     extra = '\n\n💡 Connexion impossible à OpenRouter. Vérifiez votre réseau.';
-  return '⚠️ Erreur : ' + m + extra;
+  return '⚠️ ' + m + extra;
 }
