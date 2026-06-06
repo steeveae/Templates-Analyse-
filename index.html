@@ -7,10 +7,9 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="MedChat">
-  <meta name="description" content="Assistant médical IA basé sur vos propres documents. Fonctionne entièrement dans votre navigateur.">
-  <title>MedChat — Assistant médical IA</title>
-
+  <meta name="apple-mobile-web-app-title" content="SCHAET +">
+  <meta name="description" content="SCHAET + — Interrogez vos documents avec l'IA, dans votre navigateur.">
+  <title>SCHAET +</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@500;600;700&display=swap" rel="stylesheet">
@@ -20,134 +19,210 @@
 </head>
 <body>
 
-  <!-- ============ SETUP SCREEN ============ -->
-  <div id="setup" class="screen">
-    <div class="setup-card">
-      <div class="brand">
-        <div class="brand-logo">🩺</div>
-        <div>
-          <h1>MedChat</h1>
-          <p>Configurez votre assistant médical, basé sur vos propres documents.</p>
-        </div>
-      </div>
-
-      <div class="field">
-        <label for="apiKey"><span class="num">1</span> Clé API OpenRouter</label>
-        <div class="key-wrap">
-          <input id="apiKey" class="input" type="password" autocomplete="off" spellcheck="false" placeholder="sk-or-v1-…">
-          <button type="button" id="keyToggle" class="key-toggle">Afficher</button>
-        </div>
-        <div class="hint">Stockée uniquement dans votre navigateur (localStorage). Créez-en une sur openrouter.ai/keys.</div>
-      </div>
-
-      <div class="field">
-        <label for="modelSelect"><span class="num">2</span> Modèle (gratuit)</label>
-        <select id="modelSelect" class="select"></select>
-        <div class="hint">En cas d'erreur « Provider returned error », choisissez <b>OpenRouter Auto</b> qui bascule automatiquement.</div>
-      </div>
-
-      <div class="field">
-        <label><span class="num">3</span> Documents (tous types de fichiers — jusqu'à <span id="docLimit">400</span>)</label>
-        <div id="dropzone" class="dropzone">
-          <div class="dz-icon">📄</div>
-          <div class="dz-main">Glissez vos fichiers ici ou <b>cliquez pour parcourir</b></div>
-          <div class="dz-sub">PDF, Word, PowerPoint, Excel, RTF, HTML, texte, code… Le texte est extrait localement ; rien n'est envoyé tant que vous ne posez pas de question.</div>
-        </div>
-        <input id="fileInput" type="file" multiple hidden>
-        <div id="progress" class="progress">
-          <div class="progress-track"><div id="progressBar" class="progress-bar"></div></div>
-          <div id="progressText" class="progress-text"></div>
-        </div>
-        <div id="chips" class="chips"></div>
-      </div>
-
-      <button id="launchBtn" class="btn-primary" disabled>Lancer MedChat</button>
-      <a href="#" id="resetLink" class="reset">Réinitialiser tout</a>
-
-      <div class="disclaimer">
-        MedChat est une aide à la lecture de documents et ne remplace pas l'avis d'un professionnel de santé.
+<!-- ══════════════ SETUP ══════════════ -->
+<div id="setup" class="screen">
+  <div class="setup-card">
+    <div class="brand">
+      <div class="brand-logo">S+</div>
+      <div>
+        <h1>SCHAET +</h1>
+        <p>Votre assistant IA documentaire — configurez une fois, interrogez toujours.</p>
       </div>
     </div>
-  </div>
 
-  <!-- ============ CHAT SCREEN ============ -->
-  <div id="chat" class="screen">
-    <div class="topbar">
-      <div class="logo">🩺</div>
-      <div class="title">MedChat</div>
-      <button id="btnDocs" class="docs" title="Gérer les documents et le contexte"><span class="ic">📁</span><span id="docCount">0 doc</span></button>
-      <div class="spacer"></div>
-      <button id="btnModel" class="tb-btn"><span class="ic">⚡</span><span class="lbl" id="modelLbl">Modèle</span></button>
-      <button id="btnNew" class="tb-btn"><span class="ic">✦</span><span class="lbl">Nouvelle conv</span></button>
-      <button id="btnConfig" class="tb-btn"><span class="ic">⚙️</span><span class="lbl">Config</span></button>
+    <div class="field">
+      <label for="apiKey"><span class="num">1</span> Clé API OpenRouter</label>
+      <div class="key-wrap">
+        <input id="apiKey" class="input" type="password" autocomplete="off" spellcheck="false" placeholder="sk-or-v1-…">
+        <button type="button" id="keyToggle" class="key-toggle">Afficher</button>
+      </div>
+      <div class="hint">Stockée dans votre navigateur uniquement. Créez-en une gratuite sur <b>openrouter.ai/keys</b>.</div>
     </div>
-    <div id="messages" class="messages"></div>
-    <div class="composer">
-      <div class="composer-tools">
-        <span class="tools-label">Réponses :</span>
-        <div class="seg" role="group" aria-label="Longueur des réponses">
-          <button id="modeCourt" class="seg-btn active" type="button">Court</button>
-          <button id="modeDetaille" class="seg-btn" type="button">Détaillé</button>
+
+    <div class="field">
+      <label for="modelSelect"><span class="num">2</span> Modèle IA</label>
+      <select id="modelSelect" class="select"></select>
+      <div class="hint">⚡ <b>Gemma 4</b> est le plus rapide. En cas d'erreur, choisissez <b>OpenRouter Auto</b>.</div>
+    </div>
+
+    <div class="field">
+      <label><span class="num">3</span> Documents <span class="label-sub">(jusqu'à <span id="docLimit">400</span> fichiers)</span></label>
+
+      <div class="theme-input-wrap">
+        <input id="themeInput" class="input" type="text" placeholder="Thème (ex. Cardiologie) — optionnel">
+        <button id="pickFolderBtn" type="button" class="btn-folder" title="Choisir un dossier">📁 Dossier</button>
+      </div>
+      <div class="hint">
+        <b>Ordinateur :</b> glissez un dossier → son nom devient le thème.<br>
+        <b>Mobile :</b> saisissez le thème ci-dessus, puis choisissez vos fichiers.
+      </div>
+
+      <input id="folderInput" type="file" webkitdirectory multiple hidden>
+
+      <div id="dropzone" class="dropzone">
+        <div class="dz-icon">📄</div>
+        <div class="dz-main">Glissez vos fichiers ici ou <b>cliquez pour parcourir</b></div>
+        <div class="dz-sub">PDF, Word, PowerPoint, Excel, HTML, texte, code… Extraction locale — rien n'est envoyé avant votre question.</div>
+      </div>
+      <input id="fileInput" type="file" multiple hidden>
+
+      <div id="progress" class="progress" style="display:none">
+        <div class="progress-track"><div id="progressBar" class="progress-bar"></div></div>
+        <div id="progressText" class="progress-text"></div>
+      </div>
+      <div id="chips" class="chips"></div>
+    </div>
+
+    <!-- ══ SYNC ENTRE APPAREILS ══ -->
+    <details id="syncSection" class="sync-section field">
+      <summary class="sync-summary">
+        <span class="num">4</span>
+        Sync entre appareils
+        <span class="label-sub"> — optionnel</span>
+      </summary>
+
+      <div class="sync-body">
+        <div class="sync-config">
+          <input id="sbUrlInput" class="input" type="url" placeholder="URL Supabase (https://xxx.supabase.co)" autocomplete="off" spellcheck="false">
+          <input id="sbKeyInput" class="input" type="text" placeholder="Clé anon Supabase (eyJ…)" autocomplete="off" spellcheck="false">
+          <button id="sbSaveBtn" type="button" class="btn-sync-save">Enregistrer la configuration</button>
+          <div class="hint">
+            <b>Démarrage :</b> créez un projet gratuit sur <b>supabase.com</b>, copiez l'URL et la clé <b>anon/public</b> depuis <b>Settings → API</b>, puis exécutez le script SQL du README dans l'éditeur SQL Supabase.
+          </div>
         </div>
-        <span id="ctxPill" class="ctx-pill"></span>
+
+        <div id="loginArea" class="sync-auth" style="display:flex">
+          <input id="syncEmail" class="input" type="email" placeholder="Email" autocomplete="email">
+          <input id="syncPassword" class="input" type="password" placeholder="Mot de passe (min. 6 car.)" autocomplete="current-password">
+          <div class="sync-btns">
+            <button id="syncLoginBtn" type="button" class="btn-sync">Se connecter</button>
+            <button id="syncSignupBtn" type="button" class="btn-sync-outline">Créer un compte</button>
+          </div>
+        </div>
+
+        <div id="loggedInArea" class="sync-logged" style="display:none">
+          <div class="sync-user-row">
+            <span class="sync-user-badge">✓</span>
+            <span id="syncUserEmail" class="sync-user-email"></span>
+          </div>
+          <div class="sync-btns">
+            <button id="syncPullBtn" type="button" class="btn-sync">↓ Récupérer mes docs</button>
+            <button id="syncLogoutBtn" type="button" class="btn-sync-outline">Déconnexion</button>
+          </div>
+        </div>
       </div>
-      <div class="composer-inner">
-        <textarea id="chatInput" rows="1" placeholder="Posez une question sur vos documents…"></textarea>
-        <button id="btnSend" class="send" title="Envoyer">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M3.4 20.4 21 12 3.4 3.6 3 10l12 2-12 2 .4 6.4z" fill="currentColor"/>
-          </svg>
-        </button>
+    </details>
+
+    <button id="launchBtn" class="btn-primary" disabled>Lancer SCHAET +</button>
+    <a href="#" id="resetLink" class="reset">Réinitialiser tout</a>
+    <div class="disclaimer">SCHAET + est un outil d'aide à la lecture. Il ne remplace pas un avis professionnel.</div>
+  </div>
+</div>
+
+<!-- ══════════════ CHAT ══════════════ -->
+<div id="chat" class="screen">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="logo">S+</div>
+    <div class="title">SCHAET +</div>
+    <button id="btnDocs" class="docs tb-btn" title="Gérer les documents">
+      <span class="ic">📁</span><span id="docCount">0 doc</span>
+    </button>
+    <div class="spacer"></div>
+    <button id="btnHist"  class="tb-btn" title="Historique"><span class="ic">🕐</span><span class="lbl">Historique</span></button>
+    <button id="btnModel" class="tb-btn" title="Modèle"><span class="ic">⚡</span><span class="lbl" id="modelLbl">Modèle</span></button>
+    <button id="btnNew"   class="tb-btn" title="Nouvelle conversation"><span class="ic">✦</span><span class="lbl">Nouveau</span></button>
+    <button id="btnConfig" class="tb-btn" title="Configuration"><span class="ic">⚙️</span><span class="lbl">Config</span><span id="syncDot" class="sync-dot" title="Sync actif"></span></button>
+  </div>
+
+  <!-- Barre de thèmes 1 clic -->
+  <div id="themeBar" class="theme-bar" style="display:none"></div>
+
+  <!-- Zone de messages -->
+  <div id="messages" class="messages"></div>
+
+  <!-- Composer -->
+  <div class="composer">
+    <div class="composer-tools">
+      <div class="seg" role="group" aria-label="Longueur">
+        <button id="modeCourt"   class="seg-btn active" type="button">Court</button>
+        <button id="modeDetaille" class="seg-btn"       type="button">Détaillé</button>
       </div>
-      <div class="composer-hint">Entrée pour envoyer · Maj+Entrée pour une nouvelle ligne</div>
+      <select id="themeSelect" class="theme-select" aria-label="Thème">
+        <option value="AUTO">✦ Auto</option>
+      </select>
+      <span id="ctxPill" class="ctx-pill"></span>
     </div>
-  </div>
-
-  <!-- ============ MODEL MODAL ============ -->
-  <div id="modelModal" class="modal-overlay">
-    <div class="modal" role="dialog" aria-modal="true" aria-label="Changer de modèle">
-      <div class="modal-head">
-        <h3>Changer de modèle</h3>
-        <button id="modelClose" class="modal-close" aria-label="Fermer">×</button>
-      </div>
-      <div id="modelList"></div>
+    <div class="composer-inner">
+      <textarea id="chatInput" rows="1" placeholder="Posez une question sur vos documents…"></textarea>
+      <button id="btnSend" class="send" title="Envoyer (Entrée)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M3.4 20.4 21 12 3.4 3.6 3 10l12 2-12 2 .4 6.4z" fill="currentColor"/>
+        </svg>
+      </button>
     </div>
+    <div class="composer-hint">Entrée pour envoyer · Maj+Entrée nouvelle ligne</div>
   </div>
+</div>
 
-  <!-- ============ DOCS MODAL ============ -->
-  <div id="docsModal" class="modal-overlay">
-    <div class="modal" role="dialog" aria-modal="true" aria-label="Gérer les documents">
-      <div class="modal-head">
-        <h3>Documents &amp; contexte</h3>
-        <button id="docsClose" class="modal-close" aria-label="Fermer">×</button>
-      </div>
-      <div class="docs-toolbar">
-        <input id="docsSearch" class="docs-search" type="text" placeholder="Filtrer par nom…">
-        <button id="docsAll" class="mini-btn" type="button">Tout inclure</button>
-        <button id="docsNone" class="mini-btn" type="button">Tout exclure</button>
-      </div>
-      <div id="docsCount" class="docs-count"></div>
-      <div id="docsList"></div>
-      <div class="docs-note">Décochez les documents à ignorer. À chaque question, MedChat classe les documents inclus par pertinence et fournit en priorité le texte complet des plus pertinents ; les autres restent listés dans l'inventaire. Cliquez sur un nom pour en voir un aperçu.</div>
+<!-- ══════════════ SIDEBAR HISTORIQUE ══════════════ -->
+<div id="sidebarOverlay" class="sidebar-overlay"></div>
+<div id="sidebar" class="sidebar">
+  <div class="sidebar-head">
+    <span>Historique</span>
+    <button id="sidebarClose" class="modal-close" aria-label="Fermer">×</button>
+  </div>
+  <div id="histPanel" class="hist-panel"></div>
+</div>
+
+<!-- ══════════════ MODAL MODÈLE ══════════════ -->
+<div id="modelModal" class="modal-overlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Changer de modèle">
+    <div class="modal-head">
+      <h3>Changer de modèle</h3>
+      <button id="modelClose" class="modal-close" aria-label="Fermer">×</button>
     </div>
+    <div id="modelList"></div>
   </div>
+</div>
 
-  <!-- ============ INSTALL BANNER PWA ============ -->
-  <div id="installBanner">
-    <p><b>Installer MedChat</b> — accès rapide depuis votre écran d'accueil, fonctionne hors-ligne.</p>
-    <button id="btnInstall">Installer</button>
-    <button id="btnInstallDismiss" aria-label="Fermer">×</button>
+<!-- ══════════════ MODAL DOCS ══════════════ -->
+<div id="docsModal" class="modal-overlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Gérer les documents">
+    <div class="modal-head">
+      <h3>Documents &amp; contexte</h3>
+      <button id="docsClose" class="modal-close" aria-label="Fermer">×</button>
+    </div>
+    <div class="docs-toolbar">
+      <input id="docsSearch" class="docs-search" type="text" placeholder="Filtrer par nom…">
+      <button id="docsAll"  class="mini-btn" type="button">Tout inclure</button>
+      <button id="docsNone" class="mini-btn" type="button">Tout exclure</button>
+    </div>
+    <div id="docsCount" class="docs-count"></div>
+    <div id="docsList"></div>
+    <div class="docs-note">À chaque question, SCHAET + sélectionne les documents les plus pertinents dans le thème actif et cite ses sources.</div>
   </div>
+</div>
 
-  <div id="toast" class="toast"></div>
+<!-- ══════════════ PWA BANNER ══════════════ -->
+<div id="installBanner">
+  <p><b>Installer SCHAET +</b> — accès rapide, fonctionne hors-ligne.</p>
+  <button id="btnInstall">Installer</button>
+  <button id="btnInstallDismiss" aria-label="Fermer">×</button>
+</div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script src="js/config.js"></script>
-  <script src="js/storage.js"></script>
-  <script src="js/extractor.js"></script>
-  <script src="js/context.js"></script>
-  <script src="js/api.js"></script>
-  <script src="js/ui.js"></script>
-  <script src="js/app.js"></script>
+<div id="toast" class="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/sync.js"></script>
+<script src="js/extractor.js"></script>
+<script src="js/context.js"></script>
+<script src="js/api.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
 </body>
 </html>
