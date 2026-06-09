@@ -1,6 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 
+// Indique à Cloudflare Pages d'exécuter cette route en mode Edge
+export const runtime = 'edge';
+
 // Initialisation du client Supabase via les variables d'environnement
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
